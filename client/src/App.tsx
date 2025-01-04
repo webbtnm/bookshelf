@@ -1,12 +1,12 @@
 import { Switch, Route } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Loader2 } from "lucide-react";
-import AuthPage from "./pages/AuthPage";
-import HomePage from "./pages/HomePage";
-import ShelfPage from "./pages/ShelfPage";
-import ProfilePage from "./pages/ProfilePage";
-import { useUser } from "./hooks/use-user";
-import Header from "./components/Header";
+import AuthPage from "@/pages/AuthPage";
+import HomePage from "@/pages/HomePage";
+import ShelfPage from "@/pages/ShelfPage";
+import ProfilePage from "@/pages/ProfilePage";
+import { useUser } from "@/hooks/use-user";
+import Header from "@/components/Header";
 
 function App() {
   const { user, isLoading } = useUser();

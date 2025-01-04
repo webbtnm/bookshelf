@@ -31,9 +31,9 @@ export default function ShelfPage() {
   const queryClient = useQueryClient();
   const [addBookOpen, setAddBookOpen] = useState(false);
 
-  // Validate shelf ID
-  const shelfId = id ? parseInt(id) : null;
-  const isValidId = shelfId !== null && !isNaN(shelfId);
+  // Validate shelf ID more strictly
+  const shelfId = id ? Number(id) : null;
+  const isValidId = shelfId !== null && Number.isInteger(shelfId) && shelfId > 0;
 
   const { data: shelf, isLoading: isLoadingShelf } = useQuery<Shelf>({
     queryKey: [`/api/shelves/${shelfId}`],

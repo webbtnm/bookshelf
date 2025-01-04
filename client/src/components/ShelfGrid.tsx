@@ -25,7 +25,7 @@ export function ShelfGrid({ shelves }: ShelfGridProps) {
             <Button
               variant="secondary"
               className="w-full"
-              onClick={() => setLocation(`/shelf/${shelf.id}`)}
+              onClick={() => setLocation(`/shelf/${shelf.id.toString()}`)}
             >
               View Shelf
             </Button>
