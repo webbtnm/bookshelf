@@ -121,6 +121,7 @@ export default function ShelfPage() {
   const isOwner = shelf.ownerId === user?.id;
   const isMember = members.some(member => member.id === user?.id);
   const canJoin = !isOwner && !isMember && shelf.public;
+  const canAddBooks = isOwner || isMember;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -178,7 +179,7 @@ export default function ShelfPage() {
             </Button>
           )}
 
-          {isOwner && (
+          {canAddBooks && (
             <Button onClick={() => setAddBookOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Book

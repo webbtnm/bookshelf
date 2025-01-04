@@ -292,7 +292,18 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Shelf not found");
       }
 
-      if (shelf.ownerId !== req.user.id) {
+      // Check if user is a member of the shelf
+      const [member] = await db
+        .select()
+        .from(shelfMembers)
+        .where(
+          and(
+            eq(shelfMembers.shelfId, parsedShelfId),
+            eq(shelfMembers.userId, req.user.id)
+          )
+        );
+
+      if (!member && shelf.ownerId !== req.user.id) {
         return res.status(403).send("Not authorized");
       }
 
