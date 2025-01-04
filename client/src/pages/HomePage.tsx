@@ -2,17 +2,18 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
-import ShelfGrid from "@/components/ShelfGrid";
+import { ShelfGrid } from "@/components/ShelfGrid"; // Fixed import
 import CreateShelfDialog from "@/components/CreateShelfDialog";
 import BrowseShelvesDialog from "@/components/BrowseShelvesDialog";
 import { Book, Search } from "lucide-react";
+import type { Shelf } from "@db/schema"; // Added type import
 
 export default function HomePage() {
   const { user } = useUser();
   const [createShelfOpen, setCreateShelfOpen] = useState(false);
   const [browseShelvesOpen, setBrowseShelvesOpen] = useState(false);
 
-  const { data: shelves = [], isLoading } = useQuery({
+  const { data: shelves = [], isLoading } = useQuery<Shelf[]>({
     queryKey: ["/api/shelves"],
     enabled: !!user,
   });
