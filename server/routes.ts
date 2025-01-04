@@ -153,40 +153,45 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/shelves/:shelfId/books", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated");
-    }
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).send("Not authenticated");
+      }
 
-    const { shelfId } = req.params;
-    const { bookId } = req.body;
+      const { shelfId } = req.params;
+      const { bookId } = req.body;
 
-    const [shelf] = await db
-      .select()
-      .from(shelves)
-      .where(eq(shelves.id, parseInt(shelfId)));
+      if (!shelfId || !bookId) {
+        return res.status(400).send("Missing required IDs");
+      }
 
-    if (!shelf) {
-      return res.status(404).send("Shelf not found");
-    }
+      const parsedShelfId = parseInt(shelfId);
+      const parsedBookId = parseInt(bookId);
 
-    if (shelf.ownerId !== req.user.id) {
-      return res.status(403).send("Not authorized");
-    }
+      if (isNaN(parsedShelfId) || isNaN(parsedBookId)) {
+        return res.status(400).send("Invalid shelf or book ID");
+      }
 
-    const parsedShelfId = parseInt(shelfId);
-    const parsedBookId = parseInt(bookId);
-    
-    if (Number.isNaN(parsedShelfId) || Number.isNaN(parsedBookId)) {
-      return res.status(400).send("Invalid shelf or book ID");
-    }
+      const [shelf] = await db
+        .select()
+        .from(shelves)
+        .where(eq(shelves.id, parsedShelfId));
 
-    const [shelfBook] = await db
-      .insert(shelfBooks)
-      .values({
-        shelfId: parsedShelfId,
-        bookId: parsedBookId,
-      })
-      .returning();
+      if (!shelf) {
+        return res.status(404).send("Shelf not found");
+      }
+
+      if (shelf.ownerId !== req.user.id) {
+        return res.status(403).send("Not authorized");
+      }
+
+      const [shelfBook] = await db
+        .insert(shelfBooks)
+        .values({
+          shelfId: parsedShelfId,
+          bookId: parsedBookId,
+        })
+        .returning();
 
     res.json(shelfBook);
   });
