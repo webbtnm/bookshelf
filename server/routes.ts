@@ -216,7 +216,8 @@ export function registerRoutes(app: Express): Server {
       })
       .from(books)
       .innerJoin(shelfBooks, eq(books.id, shelfBooks.bookId))
-      .where(eq(shelfBooks.shelfId, parseInt(shelfId)));
+      .where(eq(shelfBooks.shelfId, parseInt(shelfId)))
+      .execute();
 
     res.json(shelfBooks);
   });
