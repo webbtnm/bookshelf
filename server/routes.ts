@@ -171,8 +171,8 @@ export function registerRoutes(app: Express): Server {
     const [shelfBook] = await db
       .insert(shelfBooks)
       .values({
-        shelfId: parseInt(shelfId),
-        bookId: parseInt(bookId),
+        shelfId: Number.isNaN(parseInt(shelfId)) ? 0 : parseInt(shelfId),
+        bookId: Number.isNaN(parseInt(bookId)) ? 0 : parseInt(bookId),
       })
       .returning();
 
