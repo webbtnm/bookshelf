@@ -168,11 +168,18 @@ export function registerRoutes(app: Express): Server {
       return res.status(403).send("Not authorized");
     }
 
+    const parsedShelfId = parseInt(shelfId);
+    const parsedBookId = parseInt(bookId);
+    
+    if (Number.isNaN(parsedShelfId) || Number.isNaN(parsedBookId)) {
+      return res.status(400).send("Invalid shelf or book ID");
+    }
+
     const [shelfBook] = await db
       .insert(shelfBooks)
       .values({
-        shelfId: Number.isNaN(parseInt(shelfId)) ? 0 : parseInt(shelfId),
-        bookId: Number.isNaN(parseInt(bookId)) ? 0 : parseInt(bookId),
+        shelfId: parsedShelfId,
+        bookId: parsedBookId,
       })
       .returning();
 
