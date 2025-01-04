@@ -8,6 +8,46 @@ import { eq, and } from "drizzle-orm";
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
+  // Get single shelf
+  app.get("/api/shelves/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const { id } = req.params;
+
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).send("Invalid shelf ID");
+    }
+
+    const [shelf] = await db
+      .select()
+      .from(shelves)
+      .where(eq(shelves.id, parseInt(id)));
+
+    if (!shelf) {
+      return res.status(404).send("Shelf not found");
+    }
+
+    // Check if user is a member or if shelf is public
+    const isMember = await db
+      .select()
+      .from(shelfMembers)
+      .where(
+        and(
+          eq(shelfMembers.shelfId, shelf.id),
+          eq(shelfMembers.userId, req.user.id)
+        )
+      )
+      .limit(1);
+
+    if (!shelf.public && !isMember.length && shelf.ownerId !== req.user.id) {
+      return res.status(403).send("Not authorized");
+    }
+
+    res.json(shelf);
+  });
+
   // User Profile API
   app.patch("/api/user/profile", async (req, res) => {
     if (!req.isAuthenticated()) {

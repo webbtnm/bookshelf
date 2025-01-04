@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useUser } from "@/hooks/use-user";
+import { Shelf } from "@db/schema";
 
 type Member = {
   id: number;
@@ -27,20 +28,39 @@ export default function ShelfPage() {
   const { user } = useUser();
   const [addBookOpen, setAddBookOpen] = useState(false);
 
-  const { data: shelf } = useQuery({
+  const { data: shelf, isLoading: isLoadingShelf } = useQuery<Shelf>({
     queryKey: [`/api/shelves/${id}`],
+    enabled: !!id,
   });
 
-  const { data: books } = useQuery({
+  const { data: books = [], isLoading: isLoadingBooks } = useQuery({
     queryKey: [`/api/shelves/${id}/books`],
+    enabled: !!id,
   });
 
-  const { data: members } = useQuery<Member[]>({
+  const { data: members = [], isLoading: isLoadingMembers } = useQuery<Member[]>({
     queryKey: [`/api/shelves/${id}/members`],
+    enabled: !!id,
   });
+
+  if (isLoadingShelf || isLoadingBooks || isLoadingMembers) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!shelf) {
-    return null;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="py-8">
+            <p className="text-center text-muted-foreground">Shelf not found</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const isOwner = shelf.ownerId === user?.id;
@@ -62,7 +82,7 @@ export default function ShelfPage() {
             <SheetTrigger asChild>
               <Button variant="outline">
                 <Users className="mr-2 h-4 w-4" />
-                Members ({members?.length ?? 0})
+                Members ({members.length})
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -70,7 +90,7 @@ export default function ShelfPage() {
                 <SheetTitle>Shelf Members</SheetTitle>
               </SheetHeader>
               <div className="mt-4 space-y-4">
-                {members?.map((member) => (
+                {members.map((member) => (
                   <div key={member.id} className="flex items-center gap-4">
                     <Avatar>
                       <AvatarFallback>
@@ -101,9 +121,14 @@ export default function ShelfPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {books?.map((book) => (
+        {books.map((book) => (
           <BookCard key={book.id} book={book} />
         ))}
+        {books.length === 0 && (
+          <div className="col-span-full text-center py-12">
+            <p className="text-muted-foreground">No books in this shelf yet.</p>
+          </div>
+        )}
       </div>
 
       <AddBookDialog
