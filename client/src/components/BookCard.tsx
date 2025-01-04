@@ -1,6 +1,11 @@
-
-import { Book } from "@db/schema";
 import { Card, CardContent } from "@/components/ui/card";
+
+interface Book {
+  id: number;
+  title: string;
+  author: string;
+  description?: string;
+}
 
 interface BookCardProps {
   book: Book;

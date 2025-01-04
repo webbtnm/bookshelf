@@ -13,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { Book, Settings, Loader2 } from "lucide-react";
 import BookCard from "@/components/BookCard";
-import type { Book as BookType } from "@db/schema";
 import AddBookDialog from "@/components/AddBookDialog";
 
 export default function ProfilePage() {
@@ -22,8 +21,9 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContact, setEditedContact] = useState(user?.telegramContact || "");
+  const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
 
-  const { data: books, isLoading: isLoadingBooks, error: booksError } = useQuery<BookType[]>({
+  const { data: books, isLoading: isLoadingBooks, error: booksError } = useQuery<any[]>({
     queryKey: ["/api/books"],
     enabled: !!user,
   });
@@ -118,7 +118,7 @@ export default function ProfilePage() {
 
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">My Books</h2>
-          <Button onClick={() => {}}>
+          <Button onClick={() => setIsAddBookDialogOpen(true)}>
             <Book className="mr-2 h-4 w-4" />
             Add Book
           </Button>
@@ -143,7 +143,11 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         )}
-        <AddBookDialog open={false} onOpenChange={()=>{}} onSuccess={()=>{}}/>
+        <AddBookDialog 
+          open={isAddBookDialogOpen} 
+          onOpenChange={setIsAddBookDialogOpen}
+          shelfId=""
+        />
       </div>
     </div>
   );
