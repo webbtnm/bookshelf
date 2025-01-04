@@ -8,6 +8,36 @@ import { eq, and, not } from "drizzle-orm";
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
+  // Books API
+  app.get("/api/books", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).send("Not authenticated");
+      }
+
+      if (!req.user?.id) {
+        return res.status(401).send("Invalid user session");
+      }
+
+      const userBooks = await db
+        .select({
+          id: books.id,
+          title: books.title,
+          author: books.author,
+          description: books.description,
+          ownerId: books.ownerId,
+          createdAt: books.createdAt,
+        })
+        .from(books)
+        .where(eq(books.ownerId, req.user.id));
+
+      res.json(userBooks);
+    } catch (error) {
+      console.error("Error fetching books:", error);
+      res.status(500).send("Internal server error");
+    }
+  });
+
   // Get single shelf
   app.get("/api/shelves/:id", async (req, res) => {
     if (!req.isAuthenticated()) {
@@ -117,6 +147,7 @@ export function registerRoutes(app: Express): Server {
     res.json(members);
   });
 
+
   // Books API
   app.post("/api/books", async (req, res) => {
     if (!req.isAuthenticated()) {
@@ -137,18 +168,6 @@ export function registerRoutes(app: Express): Server {
     res.json(book);
   });
 
-  app.get("/api/books", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated");
-    }
-
-    const userBooks = await db
-      .select()
-      .from(books)
-      .where(eq(books.ownerId, req.user.id));
-
-    res.json(userBooks);
-  });
 
   // Shelves API
   app.post("/api/shelves", async (req, res) => {

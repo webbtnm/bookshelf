@@ -11,9 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Book, Settings, Loader2 } from "lucide-react";
+import { Book as BookIcon, Settings, Loader2 } from "lucide-react";
 import BookCard from "@/components/BookCard";
 import AddBookDialog from "@/components/AddBookDialog";
+import type { Book } from "@db/schema";
 
 export default function ProfilePage() {
   const { user } = useUser();
@@ -23,7 +24,7 @@ export default function ProfilePage() {
   const [editedContact, setEditedContact] = useState(user?.telegramContact || "");
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
 
-  const { data: books, isLoading: isLoadingBooks, error: booksError } = useQuery<any[]>({
+  const { data: books = [], isLoading: isLoadingBooks, error: booksError } = useQuery<Book[]>({
     queryKey: ["/api/books"],
     enabled: !!user,
   });
@@ -119,7 +120,7 @@ export default function ProfilePage() {
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">My Books</h2>
           <Button onClick={() => setIsAddBookDialogOpen(true)}>
-            <Book className="mr-2 h-4 w-4" />
+            <BookIcon className="mr-2 h-4 w-4" />
             Add Book
           </Button>
         </div>

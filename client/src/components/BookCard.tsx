@@ -1,11 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-
-export interface Book {
-  id: number;
-  title: string;
-  author: string;
-  description?: string;
-}
+import type { Book } from "@db/schema";
 
 export interface BookCardProps {
   book: Book;
