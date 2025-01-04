@@ -20,23 +20,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Library className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">BookCrossing</h1>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-muted-foreground">
-              Welcome, {user?.username}
-            </span>
-            <Button variant="outline" onClick={() => logout()}>
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">Your Shelves</h2>
