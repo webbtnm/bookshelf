@@ -13,7 +13,8 @@ export default function ShelfGrid({ shelves }: ShelfGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {shelves.map((shelf) => (
-        <Card key={shelf.id} className="transition-shadow hover:shadow-lg">
+        <div key={shelf.id}>
+          <Card className="transition-shadow hover:shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl">{shelf.name}</CardTitle>
           </CardHeader>
@@ -28,6 +29,7 @@ export default function ShelfGrid({ shelves }: ShelfGridProps) {
             </Button>
           </CardContent>
         </Card>
+        </div>
       ))}
     </div>
   );
