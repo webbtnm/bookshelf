@@ -2,11 +2,80 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { books, shelves, shelfMembers, shelfBooks } from "@db/schema";
+import { books, shelves, shelfMembers, shelfBooks, users } from "@db/schema";
 import { eq, and } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  // User Profile API
+  app.patch("/api/user/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const { telegramContact } = req.body;
+    const [updatedUser] = await db
+      .update(users)
+      .set({ telegramContact })
+      .where(eq(users.id, req.user.id))
+      .returning();
+
+    res.json(updatedUser);
+  });
+
+  // Shelf Members API
+  app.post("/api/shelves/:shelfId/members", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const { shelfId } = req.params;
+    const { userId } = req.body;
+
+    const [shelf] = await db
+      .select()
+      .from(shelves)
+      .where(eq(shelves.id, parseInt(shelfId)));
+
+    if (!shelf) {
+      return res.status(404).send("Shelf not found");
+    }
+
+    if (!shelf.public && shelf.ownerId !== req.user.id) {
+      return res.status(403).send("Not authorized");
+    }
+
+    const [member] = await db
+      .insert(shelfMembers)
+      .values({
+        shelfId: parseInt(shelfId),
+        userId: parseInt(userId),
+      })
+      .returning();
+
+    res.json(member);
+  });
+
+  app.get("/api/shelves/:shelfId/members", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const { shelfId } = req.params;
+
+    const members = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        telegramContact: users.telegramContact,
+      })
+      .from(users)
+      .innerJoin(shelfMembers, eq(users.id, shelfMembers.userId))
+      .where(eq(shelfMembers.shelfId, parseInt(shelfId)));
+
+    res.json(members);
+  });
 
   // Books API
   app.post("/api/books", async (req, res) => {
@@ -71,10 +140,9 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).send("Not authenticated");
     }
 
-    const userShelves = await db
-      .select()
-      .from(shelves)
-      .where(eq(shelves.ownerId, req.user.id));
+    const userShelves = await db.select().from(shelves).where(
+      eq(shelves.ownerId, req.user.id)
+    );
 
     res.json(userShelves);
   });

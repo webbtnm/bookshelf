@@ -4,7 +4,9 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import ShelfPage from "./pages/ShelfPage";
+import ProfilePage from "./pages/ProfilePage";
 import { useUser } from "./hooks/use-user";
+import Header from "./components/Header";
 
 function App() {
   const { user, isLoading } = useUser();
@@ -22,11 +24,15 @@ function App() {
   }
 
   return (
-    <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/shelf/:id" component={ShelfPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <Switch>
+        <Route path="/" component={HomePage} />
+        <Route path="/profile" component={ProfilePage} />
+        <Route path="/shelf/:id" component={ShelfPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
   );
 }
 
