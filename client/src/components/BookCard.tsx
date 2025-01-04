@@ -1,17 +1,17 @@
 import { Card, CardContent } from "@/components/ui/card";
 
-interface Book {
+export interface Book {
   id: number;
   title: string;
   author: string;
   description?: string;
 }
 
-interface BookCardProps {
+export interface BookCardProps {
   book: Book;
 }
 
-export default function BookCard({ book }: BookCardProps) {
+export function BookCard({ book }: BookCardProps) {
   return (
     <Card>
       <CardContent className="p-4">
@@ -24,3 +24,5 @@ export default function BookCard({ book }: BookCardProps) {
     </Card>
   );
 }
+
+export default BookCard;
