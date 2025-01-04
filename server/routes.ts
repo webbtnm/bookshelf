@@ -218,12 +218,18 @@ export function registerRoutes(app: Express): Server {
 
     // Get shelves where user is a member
     const memberShelves = await db
-      .select()
+      .select({
+        id: shelves.id,
+        name: shelves.name,
+        description: shelves.description,
+        ownerId: shelves.ownerId,
+        public: shelves.public,
+      })
       .from(shelves)
       .innerJoin(shelfMembers, eq(shelves.id, shelfMembers.shelfId))
       .where(eq(shelfMembers.userId, req.user.id));
 
-    res.json(memberShelves);
+    res.json({ shelves: memberShelves });
   });
 
   app.get("/api/public-shelves", async (req, res) => {

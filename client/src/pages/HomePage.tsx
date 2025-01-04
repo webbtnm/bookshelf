@@ -8,18 +8,21 @@ import BrowseShelvesDialog from "@/components/BrowseShelvesDialog";
 import { Book, Search } from "lucide-react";
 import type { Shelf } from "@db/schema";
 
+type ShelvesResponse = {
+  shelves: Shelf[];
+};
+
 export default function HomePage() {
   const { user } = useUser();
   const [createShelfOpen, setCreateShelfOpen] = useState(false);
   const [browseShelvesOpen, setBrowseShelvesOpen] = useState(false);
 
-  // Modify the query to handle the nested structure
-  const { data, isLoading } = useQuery<{ shelves: Shelf[] }>({
+  const { data: response, isLoading } = useQuery<ShelvesResponse>({
     queryKey: ["/api/shelves"],
     enabled: !!user,
   });
 
-  const shelves = data?.shelves || [];
+  const shelves = response?.shelves || [];
 
   if (isLoading) {
     return (
