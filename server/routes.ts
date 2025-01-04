@@ -5,6 +5,18 @@ import { db } from "@db";
 import { books, shelves, shelfMembers, shelfBooks, users } from "@db/schema";
 import { eq, and, not, exists } from "drizzle-orm";
 
+// Extend Express.User interface
+declare global {
+  namespace Express {
+    interface User {
+      id: number;
+      username: string;
+      password: string;
+      telegramContact?: string;
+    }
+  }
+}
+
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 

@@ -2,7 +2,7 @@ import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Book, Shelf } from "@db/schema";
+import type { Book, Shelf } from "@db/schema";
 import AddBookDialog from "@/components/AddBookDialog";
 import { useState } from "react";
 import { PlusCircle, Users, UserPlus } from "lucide-react";
