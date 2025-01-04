@@ -1,11 +1,11 @@
 import { useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import BookCard from "@/components/BookCard";
+import { Book } from "@db/schema";
 import AddBookDialog from "@/components/AddBookDialog";
 import { useState } from "react";
-import { PlusCircle, Users } from "lucide-react";
+import { PlusCircle, Users, UserPlus } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useUser } from "@/hooks/use-user";
+import { useToast } from "@/hooks/use-toast";
 import { Shelf } from "@db/schema";
 
 type Member = {
@@ -26,6 +27,8 @@ type Member = {
 export default function ShelfPage() {
   const { id } = useParams();
   const { user } = useUser();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [addBookOpen, setAddBookOpen] = useState(false);
 
   const { data: shelf, isLoading: isLoadingShelf } = useQuery<Shelf>({
@@ -41,6 +44,37 @@ export default function ShelfPage() {
   const { data: members = [], isLoading: isLoadingMembers } = useQuery<Member[]>({
     queryKey: [`/api/shelves/${id}/members`],
     enabled: !!id,
+  });
+
+  const joinShelfMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/shelves/${id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/shelves/${id}/members`] });
+      toast({
+        title: "Success",
+        description: "Successfully joined the shelf",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoadingShelf || isLoadingBooks || isLoadingMembers) {
@@ -64,6 +98,8 @@ export default function ShelfPage() {
   }
 
   const isOwner = shelf.ownerId === user?.id;
+  const isMember = members.some(member => member.id === user?.id);
+  const canJoin = !isOwner && !isMember && shelf.public;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -110,6 +146,16 @@ export default function ShelfPage() {
               </div>
             </SheetContent>
           </Sheet>
+
+          {canJoin && (
+            <Button 
+              variant="default"
+              onClick={() => joinShelfMutation.mutate()}
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Join Shelf
+            </Button>
+          )}
 
           {isOwner && (
             <Button onClick={() => setAddBookOpen(true)}>

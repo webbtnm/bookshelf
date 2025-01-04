@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Book, Settings } from "lucide-react";
+import { Book, Settings, Loader2 } from "lucide-react";
 import BookCard from "@/components/BookCard";
 import type { Book as BookType } from "@db/schema";
 import AddBookDialog from "@/components/AddBookDialog";
@@ -21,11 +21,11 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-  const [addBookOpen, setAddBookOpen] = useState(false);
   const [editedContact, setEditedContact] = useState(user?.telegramContact || "");
 
-  const { data: books } = useQuery<BookType[]>({
+  const { data: books, isLoading: isLoadingBooks, error: booksError } = useQuery<BookType[]>({
     queryKey: ["/api/books"],
+    enabled: !!user,
   });
 
   const updateProfileMutation = useMutation({
@@ -44,7 +44,7 @@ export default function ProfilePage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Success",
         description: "Profile updated successfully",
@@ -63,6 +63,14 @@ export default function ProfilePage() {
   const handleUpdateProfile = async () => {
     await updateProfileMutation.mutateAsync({ telegramContact: editedContact });
   };
+
+  if (booksError) {
+    toast({
+      title: "Error",
+      description: "Failed to load books",
+      variant: "destructive",
+    });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,25 +118,32 @@ export default function ProfilePage() {
 
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">My Books</h2>
-          <Button onClick={() => setAddBookOpen(true)}>
+          <Button onClick={() => {}}>
             <Book className="mr-2 h-4 w-4" />
             Add Book
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {books?.map((book) => (
-            <BookCard key={book.id} book={book} />
-          ))}
-        </div>
-
-        <AddBookDialog
-          open={addBookOpen}
-          onOpenChange={setAddBookOpen}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ["/api/books"] });
-          }}
-        />
+        {isLoadingBooks ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : books && books.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {books.map((book) => (
+              <BookCard key={book.id} book={book} />
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="py-8">
+              <p className="text-center text-muted-foreground">
+                You haven't added any books yet.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        <AddBookDialog open={false} onOpenChange={()=>{}} onSuccess={()=>{}}/>
       </div>
     </div>
   );
