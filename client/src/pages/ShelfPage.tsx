@@ -2,7 +2,7 @@ import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Book } from "@db/schema";
+import { Book, Shelf } from "@db/schema";
 import AddBookDialog from "@/components/AddBookDialog";
 import { useState } from "react";
 import { PlusCircle, Users, UserPlus } from "lucide-react";
@@ -16,8 +16,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
-import { Shelf } from "@db/schema";
-import { BookCard } from '@/components/BookCard'; // Added import
+import { BookCard } from "@/components/BookCard";
 
 type Member = {
   id: number;
@@ -32,24 +31,32 @@ export default function ShelfPage() {
   const queryClient = useQueryClient();
   const [addBookOpen, setAddBookOpen] = useState(false);
 
+  // Validate shelf ID
+  const shelfId = id ? parseInt(id) : null;
+  const isValidId = shelfId !== null && !isNaN(shelfId);
+
   const { data: shelf, isLoading: isLoadingShelf } = useQuery<Shelf>({
-    queryKey: [`/api/shelves/${id}`],
-    enabled: !!id && !isNaN(parseInt(id)),
+    queryKey: [`/api/shelves/${shelfId}`],
+    enabled: isValidId,
   });
 
-  const { data: books = [], isLoading: isLoadingBooks } = useQuery({
-    queryKey: [`/api/shelves/${id}/books`],
-    enabled: !!id && !isNaN(parseInt(id)),
+  const { data: books = [], isLoading: isLoadingBooks } = useQuery<Book[]>({
+    queryKey: [`/api/shelves/${shelfId}/books`],
+    enabled: isValidId,
   });
 
   const { data: members = [], isLoading: isLoadingMembers } = useQuery<Member[]>({
-    queryKey: [`/api/shelves/${id}/members`],
-    enabled: !!id,
+    queryKey: [`/api/shelves/${shelfId}/members`],
+    enabled: isValidId,
   });
 
   const joinShelfMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/shelves/${id}/members`, {
+      if (!isValidId) {
+        throw new Error("Invalid shelf ID");
+      }
+
+      const response = await fetch(`/api/shelves/${shelfId}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user?.id }),
@@ -63,7 +70,7 @@ export default function ShelfPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shelves/${id}/members`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/shelves/${shelfId}/members`] });
       toast({
         title: "Success",
         description: "Successfully joined the shelf",
@@ -77,6 +84,19 @@ export default function ShelfPage() {
       });
     },
   });
+
+  // Show error state for invalid ID
+  if (!isValidId) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="py-8">
+            <p className="text-center text-muted-foreground">Invalid shelf ID</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoadingShelf || isLoadingBooks || isLoadingMembers) {
     return (
@@ -168,7 +188,7 @@ export default function ShelfPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {books.map((book) => (
+        {books.map((book: Book) => (
           <BookCard key={book.id} book={book} />
         ))}
         {books.length === 0 && (
