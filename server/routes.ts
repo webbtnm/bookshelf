@@ -193,7 +193,10 @@ export function registerRoutes(app: Express): Server {
         })
         .returning();
 
-    res.json(shelfBook);
+      res.json(shelfBook);
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
   });
 
   app.get("/api/shelves/:shelfId/books", async (req, res) => {
