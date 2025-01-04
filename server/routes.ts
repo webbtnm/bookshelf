@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
 import { books, shelves, shelfMembers, shelfBooks, users } from "@db/schema";
-import { eq, and, not } from "drizzle-orm";
+import { eq, and, not, exists } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -176,11 +176,11 @@ export function registerRoutes(app: Express): Server {
     }
 
     const { name, description, public: isPublic } = req.body;
-    
+
     if (!name || typeof name !== 'string') {
       return res.status(400).send("Invalid shelf name");
     }
-    
+
     const [shelf] = await db
       .insert(shelves)
       .values({
@@ -204,27 +204,45 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).send("Not authenticated");
     }
 
-    // Get shelves that user owns
-    const ownedShelves = await db
+    // Get shelves where user is a member
+    const memberShelves = await db
       .select()
       .from(shelves)
-      .where(eq(shelves.ownerId, req.user.id));
+      .innerJoin(shelfMembers, eq(shelves.id, shelfMembers.shelfId))
+      .where(eq(shelfMembers.userId, req.user.id));
 
-    // Get public shelves from other users
+    res.json(memberShelves);
+  });
+
+  app.get("/api/public-shelves", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    // Get public shelves that the user is not a member of
     const publicShelves = await db
       .select()
       .from(shelves)
       .where(
         and(
           eq(shelves.public, true),
-          // Exclude shelves owned by current user (already included above)
-          // @ts-ignore - req.user.id exists as we checked isAuthenticated
-          not(eq(shelves.ownerId, req.user.id))
+          not(
+            exists(
+              db
+                .select()
+                .from(shelfMembers)
+                .where(
+                  and(
+                    eq(shelfMembers.shelfId, shelves.id),
+                    eq(shelfMembers.userId, req.user.id)
+                  )
+                )
+            )
+          )
         )
       );
 
-    // Combine and send both sets of shelves
-    res.json([...ownedShelves, ...publicShelves]);
+    res.json(publicShelves);
   });
 
   app.post("/api/shelves/:shelfId/books", async (req, res) => {

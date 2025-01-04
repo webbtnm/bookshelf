@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
 import ShelfGrid from "@/components/ShelfGrid";
 import CreateShelfDialog from "@/components/CreateShelfDialog";
-import { Book } from "lucide-react";
+import BrowseShelvesDialog from "@/components/BrowseShelvesDialog";
+import { Book, Search } from "lucide-react";
 
 export default function HomePage() {
   const { user } = useUser();
   const [createShelfOpen, setCreateShelfOpen] = useState(false);
+  const [browseShelvesOpen, setBrowseShelvesOpen] = useState(false);
 
-  const { data: shelves, isLoading } = useQuery({
+  const { data: shelves = [], isLoading } = useQuery({
     queryKey: ["/api/shelves"],
     enabled: !!user,
   });
@@ -28,23 +30,36 @@ export default function HomePage() {
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">Your Shelves</h2>
-          <Button onClick={() => setCreateShelfOpen(true)}>
-            <Book className="mr-2 h-4 w-4" />
-            Create Shelf
-          </Button>
+          <div className="flex gap-4">
+            <Button variant="outline" onClick={() => setBrowseShelvesOpen(true)}>
+              <Search className="mr-2 h-4 w-4" />
+              Browse Public Shelves
+            </Button>
+            <Button onClick={() => setCreateShelfOpen(true)}>
+              <Book className="mr-2 h-4 w-4" />
+              Create Shelf
+            </Button>
+          </div>
         </div>
 
-        {shelves && shelves.length > 0 ? (
+        {shelves.length > 0 ? (
           <ShelfGrid shelves={shelves} />
         ) : (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No shelves yet. Create your first shelf!</p>
+            <p className="text-muted-foreground">
+              No shelves yet. Create a new shelf or browse public shelves to join!
+            </p>
           </div>
         )}
 
         <CreateShelfDialog
           open={createShelfOpen}
           onOpenChange={setCreateShelfOpen}
+        />
+
+        <BrowseShelvesDialog
+          open={browseShelvesOpen}
+          onOpenChange={setBrowseShelvesOpen}
         />
       </main>
     </div>
