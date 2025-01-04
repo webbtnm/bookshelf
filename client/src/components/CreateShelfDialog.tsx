@@ -86,7 +86,7 @@ export default function CreateShelfDialog({ open, onOpenChange }: CreateShelfDia
         <DialogHeader>
           <DialogTitle>Create New Shelf</DialogTitle>
         </DialogHeader>
-        <form onSubmit={form.handleForm(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input
