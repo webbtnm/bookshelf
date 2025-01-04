@@ -200,26 +200,35 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/shelves/:shelfId/books", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).send("Not authenticated");
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).send("Not authenticated");
+      }
+
+      const { shelfId } = req.params;
+      const parsedShelfId = parseInt(shelfId);
+
+      if (isNaN(parsedShelfId)) {
+        return res.status(400).send("Invalid shelf ID");
+      }
+
+      const shelfBooksList = await db
+        .select({
+          id: books.id,
+          title: books.title,
+          author: books.author,
+          description: books.description,
+          ownerId: books.ownerId,
+        })
+        .from(books)
+        .innerJoin(shelfBooks, eq(books.id, shelfBooks.bookId))
+        .where(eq(shelfBooks.shelfId, parsedShelfId));
+
+      res.json(shelfBooksList);
+    } catch (error) {
+      console.error("Error fetching shelf books:", error);
+      res.status(500).send("Internal server error");
     }
-
-    const { shelfId } = req.params;
-
-    const shelfBooks = await db
-      .select({
-        id: books.id,
-        title: books.title,
-        author: books.author,
-        description: books.description,
-        ownerId: books.ownerId,
-      })
-      .from(books)
-      .innerJoin(shelfBooks, eq(books.id, shelfBooks.bookId))
-      .where(eq(shelfBooks.shelfId, parseInt(shelfId)))
-      .execute();
-
-    res.json(books);
   });
 
   const httpServer = createServer(app);
