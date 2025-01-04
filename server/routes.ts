@@ -127,8 +127,7 @@ export function registerRoutes(app: Express): Server {
         ownerId: books.ownerId,
       })
       .from(books)
-      .innerJoin(shelfBooks, eq(books.id, shelfBooks2.bookId))
-      .where(eq(shelfBooks.shelfId, parseInt(shelfId)));
+      .innerJoin(shelfBooks, eq(books.id, shelfBooks.bookId))
       .where(eq(shelfBooks.shelfId, parseInt(shelfId)));
 
     res.json(shelfBooks);
