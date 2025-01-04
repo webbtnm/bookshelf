@@ -1,18 +1,36 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { z } from "zod";
+
+const addBookSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  author: z.string().min(1, "Author is required"),
+  description: z.string().optional(),
+});
+
+type FormData = z.infer<typeof addBookSchema>;
 
 type AddBookDialogProps = {
   open: boolean;
@@ -20,18 +38,17 @@ type AddBookDialogProps = {
   shelfId: string;
 };
 
-type FormData = {
-  title: string;
-  author: string;
-  description: string;
-};
-
-export default function AddBookDialog({ open, onOpenChange, shelfId }: AddBookDialogProps) {
+export default function AddBookDialog({
+  open,
+  onOpenChange,
+  shelfId,
+}: AddBookDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
 
   const form = useForm<FormData>({
+    resolver: zodResolver(addBookSchema),
     defaultValues: {
       title: "",
       author: "",
@@ -41,6 +58,7 @@ export default function AddBookDialog({ open, onOpenChange, shelfId }: AddBookDi
 
   const createBookMutation = useMutation({
     mutationFn: async (data: FormData) => {
+      // Create the book
       const bookResponse = await fetch("/api/books", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,6 +72,7 @@ export default function AddBookDialog({ open, onOpenChange, shelfId }: AddBookDi
 
       const book = await bookResponse.json();
 
+      // Add the book to the shelf
       const shelfResponse = await fetch(`/api/shelves/${shelfId}/books`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -61,8 +80,8 @@ export default function AddBookDialog({ open, onOpenChange, shelfId }: AddBookDi
         credentials: "include",
       });
 
-      if (!shelfResponse?.ok) {
-        return;
+      if (!shelfResponse.ok) {
+        throw new Error(await shelfResponse.text());
       }
 
       return book;
@@ -71,7 +90,7 @@ export default function AddBookDialog({ open, onOpenChange, shelfId }: AddBookDi
       queryClient.invalidateQueries({ queryKey: [`/api/shelves/${shelfId}/books`] });
       toast({
         title: "Success",
-        description: "Book added to shelf",
+        description: "Book added to shelf successfully",
       });
       form.reset();
       onOpenChange(false);
@@ -97,41 +116,67 @@ export default function AddBookDialog({ open, onOpenChange, shelfId }: AddBookDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Book to Shelf</DialogTitle>
+          <DialogTitle>Add New Book to Shelf</DialogTitle>
+          <DialogDescription>
+            Create a new book and add it to this shelf.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              {...form.register("title", { required: true })}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter book title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="author">Author</Label>
-            <Input
-              id="author"
-              {...form.register("author", { required: true })}
+            <FormField
+              control={form.control}
+              name="author"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Author</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter author name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              {...form.register("description")}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter book description (optional)"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <Button type="submit" className="w-full" disabled={isAdding}>
-            {isAdding ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Adding...
-              </>
-            ) : (
-              "Add Book"
-            )}
-          </Button>
-        </form>
+            <Button type="submit" className="w-full" disabled={isAdding}>
+              {isAdding ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding Book...
+                </>
+              ) : (
+                "Add Book"
+              )}
+            </Button>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
