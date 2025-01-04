@@ -34,12 +34,12 @@ export default function ShelfPage() {
 
   const { data: shelf, isLoading: isLoadingShelf } = useQuery<Shelf>({
     queryKey: [`/api/shelves/${id}`],
-    enabled: !!id,
+    enabled: !!id && !isNaN(parseInt(id)),
   });
 
   const { data: books = [], isLoading: isLoadingBooks } = useQuery({
     queryKey: [`/api/shelves/${id}/books`],
-    enabled: !!id,
+    enabled: !!id && !isNaN(parseInt(id)),
   });
 
   const { data: members = [], isLoading: isLoadingMembers } = useQuery<Member[]>({
