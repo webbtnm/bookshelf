@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
 import { Shelf } from "@db/schema";
+import { BookCard } from '@/components/BookCard'; // Added import
 
 type Member = {
   id: number;
