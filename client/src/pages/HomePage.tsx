@@ -4,19 +4,24 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
 import ShelfGrid from "@/components/ShelfGrid";
 import CreateShelfDialog from "@/components/CreateShelfDialog";
-import { Book, Library } from "lucide-react";
+import { Book } from "lucide-react";
 
 export default function HomePage() {
-  const { user, logout } = useUser();
+  const { user } = useUser();
   const [createShelfOpen, setCreateShelfOpen] = useState(false);
 
-  const { data: shelves } = useQuery({
+  const { data: shelves, isLoading } = useQuery({
     queryKey: ["/api/shelves"],
+    enabled: !!user,
   });
 
-  const { data: books } = useQuery({
-    queryKey: ["/api/books"],
-  });
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,7 +34,13 @@ export default function HomePage() {
           </Button>
         </div>
 
-        <ShelfGrid shelves={shelves || []} />
+        {shelves && shelves.length > 0 ? (
+          <ShelfGrid shelves={shelves} />
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No shelves yet. Create your first shelf!</p>
+          </div>
+        )}
 
         <CreateShelfDialog
           open={createShelfOpen}
