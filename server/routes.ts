@@ -353,6 +353,107 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Delete book from shelf
+  app.delete("/api/shelves/:shelfId/books/:bookId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).send("Not authenticated");
+      }
+
+      const { shelfId, bookId } = req.params;
+      const parsedShelfId = parseInt(shelfId);
+      const parsedBookId = parseInt(bookId);
+
+      if (isNaN(parsedShelfId) || isNaN(parsedBookId)) {
+        return res.status(400).send("Invalid shelf or book ID");
+      }
+
+      // Check if user is authorized (shelf owner or member)
+      const [shelf] = await db
+        .select()
+        .from(shelves)
+        .where(eq(shelves.id, parsedShelfId));
+
+      if (!shelf) {
+        return res.status(404).send("Shelf not found");
+      }
+
+      const [member] = await db
+        .select()
+        .from(shelfMembers)
+        .where(
+          and(
+            eq(shelfMembers.shelfId, parsedShelfId),
+            eq(shelfMembers.userId, req.user.id)
+          )
+        );
+
+      if (!member && shelf.ownerId !== req.user.id) {
+        return res.status(403).send("Not authorized");
+      }
+
+      // Delete the book from the shelf
+      await db
+        .delete(shelfBooks)
+        .where(
+          and(
+            eq(shelfBooks.shelfId, parsedShelfId),
+            eq(shelfBooks.bookId, parsedBookId)
+          )
+        );
+
+      res.status(200).json({ message: "Book removed from shelf" });
+    } catch (error) {
+      console.error("Error removing book from shelf:", error);
+      res.status(500).send("Internal server error");
+    }
+  });
+
+  // Delete book entirely
+  app.delete("/api/books/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).send("Not authenticated");
+      }
+
+      const { id } = req.params;
+      const parsedId = parseInt(id);
+
+      if (isNaN(parsedId)) {
+        return res.status(400).send("Invalid book ID");
+      }
+
+      // Check if user owns the book
+      const [book] = await db
+        .select()
+        .from(books)
+        .where(eq(books.id, parsedId));
+
+      if (!book) {
+        return res.status(404).send("Book not found");
+      }
+
+      if (book.ownerId !== req.user.id) {
+        return res.status(403).send("Not authorized");
+      }
+
+      // First delete all shelf associations
+      await db
+        .delete(shelfBooks)
+        .where(eq(shelfBooks.bookId, parsedId));
+
+      // Then delete the book itself
+      await db
+        .delete(books)
+        .where(eq(books.id, parsedId));
+
+      res.status(200).json({ message: "Book deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      res.status(500).send("Internal server error");
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
