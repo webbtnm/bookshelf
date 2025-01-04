@@ -117,13 +117,18 @@ export function registerRoutes(app: Express): Server {
     }
 
     const { name, description, public: isPublic } = req.body;
+    
+    if (!name || typeof name !== 'string') {
+      return res.status(400).send("Invalid shelf name");
+    }
+    
     const [shelf] = await db
       .insert(shelves)
       .values({
         name,
-        description,
+        description: description || "",
         ownerId: req.user.id,
-        public: isPublic,
+        public: Boolean(isPublic),
       })
       .returning();
 

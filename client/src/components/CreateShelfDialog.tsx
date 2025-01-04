@@ -76,13 +76,16 @@ export default function CreateShelfDialog({ open, onOpenChange }: CreateShelfDia
   });
 
   const onSubmit = async (data: FormData) => {
-    setIsCreating(true);
-    //Data validation to prevent NaN issue.  Needs further refinement based on the actual data structure.
-    if(isNaN(parseInt(data.name)) || isNaN(parseInt(data.description))){
-      toast({title: "Error", description: "Invalid input data", variant: "destructive"})
-      return;
+    try {
+      setIsCreating(true);
+      await createShelfMutation.mutateAsync(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create shelf",
+        variant: "destructive"
+      });
     }
-    await createShelfMutation.mutateAsync(data);
   };
 
   return (
