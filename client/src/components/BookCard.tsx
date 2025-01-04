@@ -6,7 +6,7 @@ interface BookCardProps {
   book: Book;
 }
 
-export function BookCard({ book }: BookCardProps) {
+export default function BookCard({ book }: BookCardProps) {
   return (
     <Card>
       <CardContent className="p-4">
