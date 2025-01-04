@@ -12,9 +12,9 @@ export function ShelfGrid({ shelves }: ShelfGridProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {shelves.map((shelf) => (
+      {shelves.filter(shelf => shelf?.id != null).map((shelf) => (
         <Card 
-          key={`shelf-${shelf.id}`}
+          key={shelf.id}
           className="transition-shadow hover:shadow-lg"
         >
           <CardHeader>
@@ -27,12 +27,7 @@ export function ShelfGrid({ shelves }: ShelfGridProps) {
             <Button
               variant="secondary"
               className="w-full"
-              onClick={() => {
-                const shelfId = shelf?.id;
-                if (shelfId !== undefined) {
-                  setLocation(`/shelf/${shelfId}`);
-                }
-              }}
+              onClick={() => setLocation(`/shelf/${shelf.id}`)}
             >
               View Shelf
             </Button>
