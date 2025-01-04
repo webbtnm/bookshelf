@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
 import { books, shelves, shelfMembers, shelfBooks, users } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, not } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -185,11 +185,27 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).send("Not authenticated");
     }
 
-    const userShelves = await db.select().from(shelves).where(
-      eq(shelves.ownerId, req.user.id)
-    );
+    // Get shelves that user owns
+    const ownedShelves = await db
+      .select()
+      .from(shelves)
+      .where(eq(shelves.ownerId, req.user.id));
 
-    res.json(userShelves);
+    // Get public shelves from other users
+    const publicShelves = await db
+      .select()
+      .from(shelves)
+      .where(
+        and(
+          eq(shelves.public, true),
+          // Exclude shelves owned by current user (already included above)
+          // @ts-ignore - req.user.id exists as we checked isAuthenticated
+          not(eq(shelves.ownerId, req.user.id))
+        )
+      );
+
+    // Combine and send both sets of shelves
+    res.json([...ownedShelves, ...publicShelves]);
   });
 
   app.post("/api/shelves/:shelfId/books", async (req, res) => {
