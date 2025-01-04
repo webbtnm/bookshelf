@@ -61,8 +61,8 @@ export default function AddBookDialog({ open, onOpenChange, shelfId }: AddBookDi
         credentials: "include",
       });
 
-      if (!shelfResponse.ok) {
-        throw new Error(await shelfResponse.text());
+      if (!shelfResponse?.ok) {
+        return;
       }
 
       return book;
