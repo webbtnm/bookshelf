@@ -1,46 +1,21 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
 import { Book } from "@db/schema";
-import { BookPlus } from "lucide-react";
-import AddToShelfDialog from "./AddToShelfDialog";
+import { Card, CardContent } from "@/components/ui/card";
 
-type BookCardProps = {
+interface BookCardProps {
   book: Book;
-};
+}
 
-export default function BookCard({ book }: BookCardProps) {
-  const [addToShelfOpen, setAddToShelfOpen] = useState(false);
-
+export function BookCard({ book }: BookCardProps) {
   return (
-    <Card className="h-full transition-shadow hover:shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-xl">{book.title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">by {book.author}</p>
+    <Card>
+      <CardContent className="p-4">
+        <h3 className="font-bold mb-2">{book.title}</h3>
+        <p className="text-sm text-muted-foreground mb-2">by {book.author}</p>
         {book.description && (
-          <p className="mt-4 text-sm text-muted-foreground line-clamp-3">
-            {book.description}
-          </p>
+          <p className="text-sm text-muted-foreground">{book.description}</p>
         )}
       </CardContent>
-      <CardFooter>
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={() => setAddToShelfOpen(true)}
-        >
-          <BookPlus className="mr-2 h-4 w-4" />
-          Add to Shelf
-        </Button>
-      </CardFooter>
-
-      <AddToShelfDialog
-        open={addToShelfOpen}
-        onOpenChange={setAddToShelfOpen}
-        book={book}
-      />
     </Card>
   );
 }
