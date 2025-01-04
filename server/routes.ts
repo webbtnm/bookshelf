@@ -166,18 +166,29 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).send("Not authenticated");
     }
 
-    const { title, author, description } = req.body;
-    const [book] = await db
-      .insert(books)
-      .values({
-        title,
-        author,
-        description,
-        ownerId: req.user.id,
-      })
-      .returning();
+    try {
+      const { title, author, description } = req.body;
 
-    res.json(book);
+      // Basic validation
+      if (!title || !author) {
+        return res.status(400).send("Title and author are required");
+      }
+
+      const [book] = await db
+        .insert(books)
+        .values({
+          title,
+          author,
+          description: description || "",
+          ownerId: req.user.id,
+        })
+        .returning();
+
+      res.json(book);
+    } catch (error) {
+      console.error("Error creating book:", error);
+      res.status(500).send("Internal server error");
+    }
   });
 
 

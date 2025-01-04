@@ -35,13 +35,11 @@ type FormData = z.infer<typeof addBookSchema>;
 type AddBookDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  shelfId: string;
 };
 
 export default function AddBookDialog({
   open,
   onOpenChange,
-  shelfId,
 }: AddBookDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -58,39 +56,24 @@ export default function AddBookDialog({
 
   const createBookMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      // Create the book
-      const bookResponse = await fetch("/api/books", {
+      const response = await fetch("/api/books", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
         credentials: "include",
       });
 
-      if (!bookResponse.ok) {
-        throw new Error(await bookResponse.text());
+      if (!response.ok) {
+        throw new Error(await response.text());
       }
 
-      const book = await bookResponse.json();
-
-      // Add the book to the shelf
-      const shelfResponse = await fetch(`/api/shelves/${shelfId}/books`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId: book.id }),
-        credentials: "include",
-      });
-
-      if (!shelfResponse.ok) {
-        throw new Error(await shelfResponse.text());
-      }
-
-      return book;
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shelves/${shelfId}/books`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/books"] });
       toast({
         title: "Success",
-        description: "Book added to shelf successfully",
+        description: "Book created successfully",
       });
       form.reset();
       onOpenChange(false);
@@ -116,9 +99,9 @@ export default function AddBookDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Book to Shelf</DialogTitle>
+          <DialogTitle>Add New Book</DialogTitle>
           <DialogDescription>
-            Create a new book and add it to this shelf.
+            Create a new book in your collection. You can add it to shelves later.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
