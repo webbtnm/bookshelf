@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -16,34 +17,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Book, Shelf } from "@db/schema";
+import type { Book } from "@db/schema";
 
 type AddToShelfDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  book: Book;
+  shelfId: string;
 };
 
 export default function AddToShelfDialog({
   open,
   onOpenChange,
-  book,
+  shelfId,
 }: AddToShelfDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedShelf, setSelectedShelf] = useState<string>("");
+  const [selectedBook, setSelectedBook] = useState<string>("");
   const [isAdding, setIsAdding] = useState(false);
 
-  const { data: shelves = [] } = useQuery<Shelf[]>({
-    queryKey: ["/api/shelves"],
+  const { data: books = [], isLoading } = useQuery<Book[]>({
+    queryKey: ["/api/books"],
+    enabled: open,
   });
 
   const addToShelfMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/shelves/${selectedShelf}/books`, {
+      const response = await fetch(`/api/shelves/${shelfId}/books`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId: book.id }),
+        body: JSON.stringify({ bookId: selectedBook }),
         credentials: "include",
       });
 
@@ -54,7 +56,7 @@ export default function AddToShelfDialog({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/shelves/${selectedShelf}/books`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/shelves/${shelfId}/books`] });
       toast({
         title: "Success",
         description: "Book added to shelf successfully",
@@ -70,15 +72,15 @@ export default function AddToShelfDialog({
     },
     onSettled: () => {
       setIsAdding(false);
-      setSelectedShelf("");
+      setSelectedBook("");
     },
   });
 
   const handleAddToShelf = async () => {
-    if (!selectedShelf) {
+    if (!selectedBook) {
       toast({
         title: "Error",
-        description: "Please select a shelf",
+        description: "Please select a book",
         variant: "destructive",
       });
       return;
@@ -88,32 +90,52 @@ export default function AddToShelfDialog({
     await addToShelfMutation.mutateAsync();
   };
 
+  if (isLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add "{book.title}" to Shelf</DialogTitle>
+          <DialogTitle>Add Book to Shelf</DialogTitle>
+          <DialogDescription>
+            Select one of your books to add to this shelf.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <Select
-            value={selectedShelf}
-            onValueChange={setSelectedShelf}
+            value={selectedBook}
+            onValueChange={setSelectedBook}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a shelf" />
+              <SelectValue placeholder="Select a book" />
             </SelectTrigger>
             <SelectContent>
-              {shelves.map((shelf) => (
-                <SelectItem key={shelf.id} value={String(shelf.id)}>
-                  {shelf.name}
+              {books.map((book) => (
+                <SelectItem key={book.id} value={String(book.id)}>
+                  {book.title} by {book.author}
                 </SelectItem>
               ))}
+              {books.length === 0 && (
+                <SelectItem value="" disabled>
+                  No books available. Create books in your profile first.
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
           <Button 
             onClick={handleAddToShelf} 
             className="w-full" 
-            disabled={isAdding || !selectedShelf}
+            disabled={isAdding || !selectedBook}
           >
             {isAdding ? (
               <>

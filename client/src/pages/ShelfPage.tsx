@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Book, Shelf } from "@db/schema";
-import AddBookDialog from "@/components/AddBookDialog";
+import AddToShelfDialog from "@/components/AddToShelfDialog";
 import { useState } from "react";
 import { PlusCircle, Users, UserPlus } from "lucide-react";
 import {
@@ -29,7 +29,7 @@ export default function ShelfPage() {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [addBookOpen, setAddBookOpen] = useState(false);
+  const [addToShelfOpen, setAddToShelfOpen] = useState(false);
 
   // Validate shelf ID more strictly
   const shelfId = id ? Number(id) : null;
@@ -180,9 +180,9 @@ export default function ShelfPage() {
           )}
 
           {canAddBooks && (
-            <Button onClick={() => setAddBookOpen(true)}>
+            <Button onClick={() => setAddToShelfOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Book
+              Add Books to Shelf
             </Button>
           )}
         </div>
@@ -199,9 +199,9 @@ export default function ShelfPage() {
         )}
       </div>
 
-      <AddBookDialog
-        open={addBookOpen}
-        onOpenChange={setAddBookOpen}
+      <AddToShelfDialog
+        open={addToShelfOpen}
+        onOpenChange={setAddToShelfOpen}
         shelfId={id}
       />
     </div>
